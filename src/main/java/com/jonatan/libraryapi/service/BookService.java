@@ -2,6 +2,8 @@ package com.jonatan.libraryapi.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.jonatan.libraryapi.dto.book.BookListV2ResponseDto;
@@ -69,6 +71,11 @@ public class BookService {
                 .map(bookMapper::toBookV2ResponseDto)
                 .toList();
         return new BookListV2ResponseDto(books, "v2");
+    }
+
+    public Page<BookResponseDto> getAllBooksPaged(Pageable pageable) {
+        return bookRepository.findAll(pageable)
+                .map(bookMapper::toBookResponseDto);
     }
 
 
