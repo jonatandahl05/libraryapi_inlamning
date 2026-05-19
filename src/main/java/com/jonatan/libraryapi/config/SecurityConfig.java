@@ -29,11 +29,16 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/books/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v2/books/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                    .requestMatchers("/h2-console/**").permitAll()
+                    .requestMatchers(
+                            "/swagger-ui/**",
+                            "/swagger-ui.html",
+                            "/v3/api-docs/**"
+                    ).permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/books/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v2/books/**").permitAll()
+                    .anyRequest().authenticated()
+            )
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();
