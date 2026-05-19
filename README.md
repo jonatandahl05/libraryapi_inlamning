@@ -8,29 +8,32 @@ Man kan:
 - låna böcker
 - se alla lån
 
-Jag har också lagt till versionering på books (`v1` och `v2`) samt tester för att säkerställa att API:t funkar som det ska.
+Jag har också lagt till versionering på books (v1 och v2) samt tester för att säkerställa att API:t funkar som det ska.
 
 ---
 
 ## Teknik
+
 Projektet är byggt med:
 - Java
 - Spring Boot
 - Spring Data JPA
 - H2 (in-memory databas)
+- Redis
 - Maven
 
 ---
 
 ## Struktur
+
 Jag har delat upp projektet i flera lager:
 
-- `controller` – hanterar HTTP requests
-- `service` – innehåller logiken
-- `repository` – databaskoppling
-- `dto` – används för request/response istället för entities
-- `mapper` – konverterar mellan entity och dto
-- `exception` – global felhantering
+- controller – hanterar HTTP requests
+- service – innehåller logiken
+- repository – databaskoppling
+- dto – används för request/response istället för entities
+- mapper – konverterar mellan entity och dto
+- exception – global felhantering
 
 ---
 
@@ -46,7 +49,7 @@ Jag har delat upp projektet i flera lager:
 - ta bort bok
 
 ### Books v2
-- returnerar books i ett annat format via `/api/v2/books`
+- returnerar books i ett annat format via /api/v2/books
 
 ### Loans
 - låna bok
@@ -55,6 +58,7 @@ Jag har delat upp projektet i flera lager:
 ---
 
 ## Viktig regel
+
 En bok kan bara ha ett aktivt lån åt gången.
 
 Om man försöker låna samma bok igen:
@@ -62,7 +66,32 @@ Om man försöker låna samma bok igen:
 
 ---
 
+## Redis Cache
+
+Jag lade till caching med Redis för att minska antalet databasanrop när samma bok hämtas flera gånger.
+
+### Prestanda
+
+Innan Redis cache:
+- Response time: 0.106759s
+
+Efter Redis cache:
+- Response time: 0.000291s
+
+### Problem under implementation
+
+Först uppstod ett problem med serialisering eftersom BookResponseDto inte kunde sparas i Redis.
+
+Det löstes genom att:
+- göra DTO:n Serializable
+- tömma Redis-cachen med:
+
+bash redis-cli flushall 
+
+---
+
 ## Tester
+
 Jag har skrivit integrationstester som testar:
 
 - att man inte kan låna samma bok två gånger
@@ -72,5 +101,4 @@ Jag har skrivit integrationstester som testar:
 
 Kör tester med:
 
-```bash
-./mvnw test
+bash ./mvnw test 

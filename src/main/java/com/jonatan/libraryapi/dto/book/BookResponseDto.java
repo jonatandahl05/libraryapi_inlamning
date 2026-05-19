@@ -1,6 +1,8 @@
 package com.jonatan.libraryapi.dto.book;
 
-public class BookResponseDto {
+import java.io.Serializable;
+
+public class BookResponseDto implements Serializable {
 
     private Long id;
     private String title;

@@ -2,6 +2,7 @@ package com.jonatan.libraryapi.service;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -51,7 +52,8 @@ public class BookService {
                 .map(bookMapper::toBookResponseDto)
                 .toList();
     }
-
+    
+    @Cacheable("books")
     public BookResponseDto getBookById(Long id) {
             Book book = bookRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + id));
