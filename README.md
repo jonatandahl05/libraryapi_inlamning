@@ -76,7 +76,7 @@ Innan Redis cache:
 - Response time: 0.106759s
 
 Efter Redis cache:
-- Response time: 0.000291s
+- Response time: 0.066662s
 
 ### Problem under implementation
 
