@@ -12,6 +12,18 @@
 	<artifactId>libraryapi</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>libraryapi</name>
+
+	<dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2025.1.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 	<description/>
 	<url/>
 	<licenses>
@@ -99,7 +111,13 @@
     <groupId>com.bucket4j</groupId>
     <artifactId>bucket4j_jdk17-core</artifactId>
     <version>8.14.0</version>
-     </dependency>
+    </dependency>
+
+	<dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-starter-vault-config</artifactId>
+</dependency>
+
 	</dependencies>
 
 	<build>
