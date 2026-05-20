@@ -1,5 +1,7 @@
 package com.jonatan.libraryapi.integration;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,12 +35,13 @@ public class LoanIntegrationTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        String auth = "admin:password";
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+        headers.set("Authorization", "Basic " + encodedAuth);
 
-        String authorJson = """
-                {
-                  "name": "J.K. Rowling"
-                }
-                """;
+        String authorJson = "{\n" +
+                "  \"name\": \"J.K. Rowling\"\n" +
+                "}";
 
         ResponseEntity<Map> authorResponse = restTemplate.postForEntity(
                 baseUrl + "/api/v1/authors",
@@ -50,16 +53,14 @@ public class LoanIntegrationTest {
 
         Integer authorId = (Integer) authorResponse.getBody().get("id");
 
-        String uniqueIsbn = "isbn-" + System.nanoTime();
+        String uniqueIsbn = "978" + String.format("%010d", Math.abs(System.nanoTime() % 10_000_000_000L));
 
-        String bookJson = """
-        {
-          "title": "Harry Potter",
-          "authorId": %d,
-          "isbn": "%s",
-          "publicationYear": 1997
-        }
-        """.formatted(authorId, uniqueIsbn);    
+        String bookJson = "{\n" +
+                "  \"title\": \"Harry Potter\",\n" +
+                "  \"authorId\": " + authorId + ",\n" +
+                "  \"isbn\": \"" + uniqueIsbn + "\",\n" +
+                "  \"publicationYear\": 1997\n" +
+                "}";
 
         ResponseEntity<Map> bookResponse = restTemplate.postForEntity(
                 baseUrl + "/api/v1/books",
@@ -71,11 +72,9 @@ public class LoanIntegrationTest {
 
         Integer bookId = (Integer) bookResponse.getBody().get("id");
 
-        String loanJson = """
-                {
-                  "bookId": %d
-                }
-                """.formatted(bookId);
+        String loanJson = "{\n" +
+                "  \"bookId\": " + bookId + "\n" +
+                "}";
 
         ResponseEntity<Map> firstLoanResponse = restTemplate.postForEntity(
                 baseUrl + "/api/v1/loans",
@@ -103,12 +102,13 @@ public class LoanIntegrationTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        String auth = "admin:password";
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+        headers.set("Authorization", "Basic " + encodedAuth);
 
-        String loanJson = """
-                {
-                  "bookId": 9999
-                }
-                """;
+        String loanJson = "{\n" +
+                "  \"bookId\": 9999\n" +
+                "}";
 
         HttpClientErrorException exception = assertThrows(
         HttpClientErrorException.class,

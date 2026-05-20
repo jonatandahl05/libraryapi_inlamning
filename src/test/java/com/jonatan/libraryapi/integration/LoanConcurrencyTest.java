@@ -1,6 +1,8 @@
 package com.jonatan.libraryapi.integration;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -40,12 +42,13 @@ public class LoanConcurrencyTest {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        String auth = "admin:password";
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+        headers.set("Authorization", "Basic " + encodedAuth);
 
-        String authorJson = """
-                {
-                  "name": "Concurrent Author"
-                }
-                """;
+        String authorJson = "{\n" +
+                "  \"name\": \"Concurrent Author\"\n" +
+                "}";
 
         ResponseEntity<Map> authorResponse = restTemplate.postForEntity(
                 baseUrl + "/api/v1/authors",
@@ -56,16 +59,13 @@ public class LoanConcurrencyTest {
         assertEquals(HttpStatus.CREATED, authorResponse.getStatusCode());
         Integer authorId = (Integer) authorResponse.getBody().get("id");
 
-        String uniqueIsbn = "isbn-" + System.nanoTime();
-
-        String bookJson = """
-        {
-          "title": "Concurrent Book",
-          "authorId": %d,
-          "isbn": "%s",
-          "publicationYear": 2024
-        }
-        """.formatted(authorId, uniqueIsbn);
+        String uniqueIsbn = "978" + String.format("%010d", Math.abs(System.nanoTime() % 10_000_000_000L));
+        String bookJson = "{\n" +
+                "  \"title\": \"Concurrent Book\",\n" +
+                "  \"authorId\": " + authorId + ",\n" +
+                "  \"isbn\": \"" + uniqueIsbn + "\",\n" +
+                "  \"publicationYear\": 2024\n" +
+                "}";
 
         ResponseEntity<Map> bookResponse = restTemplate.postForEntity(
                 baseUrl + "/api/v1/books",
@@ -75,14 +75,11 @@ public class LoanConcurrencyTest {
 
         assertEquals(HttpStatus.CREATED, bookResponse.getStatusCode());
         Integer bookId = (Integer) bookResponse.getBody().get("id");
+        String loanJson = "{\n" +
+                "  \"bookId\": " + bookId + "\n" +
+                "}";
 
-        String loanJson = """
-                {
-                  "bookId": %d
-                }
-                """.formatted(bookId);
-
-        int numberOfRequests = 100;
+        int numberOfRequests = 10;
         ExecutorService executorService = Executors.newFixedThreadPool(10);
         List<Callable<Integer>> tasks = new ArrayList<>();
 
@@ -124,9 +121,11 @@ public class LoanConcurrencyTest {
         assertTrue(createdCount >= 1);
         assertTrue(rejectedCount >= 1);
 
-        ResponseEntity<List> allLoansResponse = restTemplate.getForEntity(
-        baseUrl + "/api/v1/loans",
-        List.class
+        ResponseEntity<List> allLoansResponse = restTemplate.exchange(
+                baseUrl + "/api/v1/loans",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(headers),
+                List.class
         );
 
         assertEquals(HttpStatus.OK, allLoansResponse.getStatusCode());

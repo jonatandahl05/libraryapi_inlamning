@@ -1,5 +1,6 @@
 package com.jonatan.libraryapi.integration;
 
+import java.util.Base64;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,11 +35,13 @@ public class BookIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        String authorJson = """
-                {
-                  "name": "George Orwell"
-                }
-                """;
+        String auth = "admin:password";
+        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes());
+        headers.set("Authorization", "Basic " + encodedAuth);
+
+        String authorJson = "{\n" +
+                "  \"name\": \"George Orwell\"\n" +
+                "}";
 
         ResponseEntity<Map> authorResponse = restTemplate.postForEntity(
                 baseUrl + "/api/v1/authors",
@@ -51,14 +55,15 @@ public class BookIntegrationTest {
 
         String uniqueIsbn = "isbn-" + System.nanoTime();
 
-        String bookJson = """
-            {
-             "title": "1984",
-             "authorId": %d,
-             "isbn": "%s",
-             "publicationYear": 1949
-            }
-        """.formatted(authorId, uniqueIsbn);
+        String bookJson = String.format(
+            "{\n" +
+            " \"title\": \"1984\",\n" +
+            " \"authorId\": %d,\n" +
+            " \"isbn\": \"%s\",\n" +
+            " \"publicationYear\": 1949\n" +
+            "}",
+            authorId, uniqueIsbn
+        );
 
         ResponseEntity<Map> bookResponse = restTemplate.postForEntity(
                 baseUrl + "/api/v1/books",
@@ -68,8 +73,10 @@ public class BookIntegrationTest {
 
         assertEquals(HttpStatus.CREATED, bookResponse.getStatusCode());
 
-        ResponseEntity<Map> v2Response = restTemplate.getForEntity(
+        ResponseEntity<Map> v2Response = restTemplate.exchange(
                 baseUrl + "/api/v2/books",
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
                 Map.class
         );
 
