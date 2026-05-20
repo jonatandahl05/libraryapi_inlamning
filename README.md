@@ -1,39 +1,16 @@
 # Library API
 
-Det här är ett Spring Boot-projekt där man kan hantera författare, böcker och lån.
+Ett backendprojekt byggt med Spring Boot där man kan hantera författare, böcker och lån via ett REST API.
 
-Man kan:
-- skapa authors
-- skapa och hämta books
-- låna böcker
-- se alla lån
-
-Jag har också lagt till versionering på books (v1 och v2) samt tester för att säkerställa att API:t funkar som det ska.
-
----
-
-## Teknik
-
-Projektet är byggt med:
-- Java
+Projektet fokuserar på:
 - Spring Boot
-- Spring Data JPA
-- H2 (in-memory databas)
-- Redis
-- Maven
-
----
-
-## Struktur
-
-Jag har delat upp projektet i flera lager:
-
-- controller – hanterar HTTP requests
-- service – innehåller logiken
-- repository – databaskoppling
-- dto – används för request/response istället för entities
-- mapper – konverterar mellan entity och dto
-- exception – global felhantering
+- REST APIs
+- JPA/Hibernate
+- Redis cache
+- Rate limiting
+- Integrationstester
+- Concurrency-hantering
+- Vault för secrets/configuration
 
 ---
 
@@ -49,7 +26,8 @@ Jag har delat upp projektet i flera lager:
 - ta bort bok
 
 ### Books v2
-- returnerar books i ett annat format via /api/v2/books
+- versionerat endpoint via /api/v2/books
+- returnerar data i ett annat response-format
 
 ### Loans
 - låna bok
@@ -57,34 +35,66 @@ Jag har delat upp projektet i flera lager:
 
 ---
 
-## Viktig regel
+## Affärsregel
 
 En bok kan bara ha ett aktivt lån åt gången.
 
-Om man försöker låna samma bok igen:
-- får man ett fel (400 eller 409 beroende på situation)
+Om flera requests försöker låna samma bok samtidigt:
+- endast ett lån skapas
+- övriga requests returnerar felkod
+
+---
+
+## Teknik
+
+Projektet är byggt med:
+
+- Java 21
+- Spring Boot
+- Spring Security
+- Spring Data JPA
+- H2 Database
+- Redis
+- Bucket4j
+- Spring Vault
+- Maven
+- Swagger / OpenAPI
+
+---
+
+## Arkitektur
+
+Projektet är uppdelat i flera lager:
+
+- controller – hanterar HTTP requests
+- service – affärslogik
+- repository – databasanrop
+- dto – request/response-objekt
+- mapper – konvertering mellan DTO och entity
+- exception – global felhantering
+- config – security, redis, rate limiting och vault config
 
 ---
 
 ## Redis Cache
 
-Jag lade till caching med Redis för att minska antalet databasanrop när samma bok hämtas flera gånger.
+Redis används för caching av böcker för att minska antalet databasanrop och förbättra prestandan.
 
 ### Prestanda
 
-Innan Redis cache:
+Innan cache:
 - Response time: 0.106759s
 
-Efter Redis cache:
+Efter cache:
 - Response time: 0.066662s
 
 ### Problem under implementation
 
-Först uppstod ett problem med serialisering eftersom BookResponseDto inte kunde sparas i Redis.
+Ett serialiseringsproblem uppstod eftersom BookResponseDto inte kunde sparas i Redis.
 
 Det löstes genom att:
-- göra DTO:n Serializable
-- tömma Redis-cachen med:
+- implementera Serializable
+- rensa Redis-cachen:
 
 bash redis-cli flushall 
 
@@ -92,22 +102,59 @@ bash redis-cli flushall
 
 ## Rate Limiting
 
-Jag lade till rate limiting med Bucket4j för att skydda API:t från för många requests på kort tid.
+API:t använder Bucket4j för att begränsa antalet requests.
 
-Just nu tillåter API:t max 20 requests per minut. Om gränsen överskrids returnerar API:t:
+Nuvarande gräns:
+- max 20 requests per minut
 
-```http
-429 Too Many Requests
+Om gränsen överskrids returneras:
+
+http 429 Too Many Requests 
+
+---
+
+## Spring Vault
+
+Spring Vault används för att hantera känslig konfiguration och credentials utanför applikationen.
+
+Exempel:
+- datasource username
+- datasource password
+
+Secrets lagras i Vault istället för direkt i application.properties.
+
+---
+
+## Säkerhet
+
+API:t är skyddat med Spring Security och använder Basic Authentication.
+
+---
 
 ## Tester
 
-Jag har skrivit integrationstester som testar:
+Projektet innehåller integrationstester för att verifiera:
 
-- att man inte kan låna samma bok två gånger
-- att rätt felkod returneras om bok inte finns
-- att books v2 returnerar rätt format
-- concurrency (flera requests samtidigt)
+- att samma bok inte kan lånas två gånger
+- att rätt felkod returneras när bok saknas
+- att versionerade endpoints fungerar korrekt
+- concurrency-hantering vid flera samtidiga requests
 
-Kör tester med:
+Kör tester:
 
 bash ./mvnw test 
+
+---
+
+## Swagger
+
+Swagger/OpenAPI används för att testa API:t via webbläsaren.
+
+Swagger UI:
+bash http://localhost:8080/swagger-ui.html 
+
+---
+
+## Starta projektet
+
+bash ./mvnw spring-boot:run 
