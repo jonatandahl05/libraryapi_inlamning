@@ -90,6 +90,15 @@ bash redis-cli flushall
 
 ---
 
+## Rate Limiting
+
+Jag lade till rate limiting med Bucket4j för att skydda API:t från för många requests på kort tid.
+
+Just nu tillåter API:t max 20 requests per minut. Om gränsen överskrids returnerar API:t:
+
+```http
+429 Too Many Requests
+
 ## Tester
 
 Jag har skrivit integrationstester som testar:
