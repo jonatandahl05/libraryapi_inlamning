@@ -26,7 +26,7 @@ Projektet fokuserar på:
 - ta bort bok
 
 ### Books v2
-- versionerat endpoint via /api/v2/books
+- versionerat endpoint via `/api/v2/books`
 - returnerar data i ett annat response-format
 
 ### Loans
@@ -66,13 +66,13 @@ Projektet är byggt med:
 
 Projektet är uppdelat i flera lager:
 
-- controller – hanterar HTTP requests
-- service – affärslogik
-- repository – databasanrop
-- dto – request/response-objekt
-- mapper – konvertering mellan DTO och entity
-- exception – global felhantering
-- config – security, redis, rate limiting och vault config
+- `controller` – hanterar HTTP requests
+- `service` – affärslogik
+- `repository` – databasanrop
+- `dto` – request/response-objekt
+- `mapper` – konvertering mellan DTO och entity
+- `exception` – global felhantering
+- `config` – security, redis, rate limiting och vault config
 
 ---
 
@@ -83,20 +83,22 @@ Redis används för caching av böcker för att minska antalet databasanrop och 
 ### Prestanda
 
 Innan cache:
-- Response time: 0.106759s
+- Response time: `0.106759s`
 
 Efter cache:
-- Response time: 0.066662s
+- Response time: `0.066662s`
 
 ### Problem under implementation
 
-Ett serialiseringsproblem uppstod eftersom BookResponseDto inte kunde sparas i Redis.
+Ett serialiseringsproblem uppstod eftersom `BookResponseDto` inte kunde sparas i Redis.
 
 Det löstes genom att:
-- implementera Serializable
+- implementera `Serializable`
 - rensa Redis-cachen:
 
-bash redis-cli flushall 
+```bash
+redis-cli flushall
+```
 
 ---
 
@@ -107,9 +109,11 @@ API:t använder Bucket4j för att begränsa antalet requests.
 Nuvarande gräns:
 - max 20 requests per minut
 
-Om gränsen överskrids returneras:
+Om gränsen överskrids returnerar API:t:
 
-http 429 Too Many Requests 
+```http
+429 Too Many Requests
+```
 
 ---
 
@@ -121,13 +125,18 @@ Exempel:
 - datasource username
 - datasource password
 
-Secrets lagras i Vault istället för direkt i application.properties.
+Secrets lagras i Vault istället för direkt i `application.properties`.
 
 ---
 
 ## Säkerhet
 
 API:t är skyddat med Spring Security och använder Basic Authentication.
+
+Projektet innehåller även:
+- CORS-konfiguration
+- input validation för DTO:er
+- skyddade endpoints
 
 ---
 
@@ -140,9 +149,11 @@ Projektet innehåller integrationstester för att verifiera:
 - att versionerade endpoints fungerar korrekt
 - concurrency-hantering vid flera samtidiga requests
 
-Kör tester:
+Kör tester med:
 
-bash ./mvnw test 
+```bash
+./mvnw test
+```
 
 ---
 
@@ -151,10 +162,30 @@ bash ./mvnw test
 Swagger/OpenAPI används för att testa API:t via webbläsaren.
 
 Swagger UI:
-bash http://localhost:8080/swagger-ui.html 
+
+```bash
+http://localhost:8080/swagger-ui.html
+```
 
 ---
 
 ## Starta projektet
 
-bash ./mvnw spring-boot:run 
+Starta applikationen med:
+
+```bash
+./mvnw spring-boot:run
+```
+
+---
+
+## Inloggning
+
+API:t använder Basic Authentication.
+
+Exempel:
+
+- Username: `admin`
+- Password: `password`
+
+---
